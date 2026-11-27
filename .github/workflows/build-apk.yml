@@ -22,7 +22,14 @@ jobs:
       - name: Build debug APK
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          gradle :app:assembleDebug --no-daemon --stacktrace
+          set -o pipefail
+          gradle :app:assembleDebug --no-daemon 2>&1 | tee build.log
+
+      - name: Report errors
+        if: failure()
+        run: |
+          grep -E "^e: |error:|What went wrong|Could not|> " build.log | head -40 | while IFS= read -r l; do echo "::error::$l"; done
+          sed -n '/What went wrong/,/Try:/p' build.log | tr '\n' ' ' | cut -c1-3000 | sed 's/^/::error::WWW /'
 
       - uses: actions/upload-artifact@v4
         with:
