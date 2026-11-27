@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Folder to watch"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/pathInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="/storage/emulated/0/Download"
+        android:inputType="textUri"
+        android:singleLine="true"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/browseBtn"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Browse…" />
+
+        <Button
+            android:id="@+id/storageRootBtn"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="Whole storage" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/storagePermBtn"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Grant all files access" />
+
+    <Button
+        android:id="@+id/usagePermBtn"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Grant usage access (optional)" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/modifySwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Log in-progress writes (MODIFIED)" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/attribSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Log permission/timestamp changes" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/hiddenSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Include hidden (.dot) files &amp; folders" />
+
+    <Button
+        android:id="@+id/startBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Start watching" />
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="4dp"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Live log"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/exportBtn"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Export CSV" />
+
+        <Button
+            android:id="@+id/clearBtn"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="No changes yet.\nStart watching, then use any app."
+            android:textColor="#888" />
+    </FrameLayout>
+</LinearLayout>
