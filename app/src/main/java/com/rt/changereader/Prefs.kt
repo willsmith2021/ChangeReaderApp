@@ -25,4 +25,9 @@ class Prefs(context: Context) {
     var logAttrib: Boolean
         get() = sp.getBoolean("attrib", false)
         set(v) = sp.edit().putBoolean("attrib", v).apply()
+
+    /** Use su (root) to watch protected folders like /data/data/<app>. */
+    var useRoot: Boolean
+        get() = sp.getBoolean("root", false)
+        set(v) = sp.edit().putBoolean("root", v).apply()
 }

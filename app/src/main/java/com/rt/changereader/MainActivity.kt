@@ -70,6 +70,24 @@ class MainActivity : AppCompatActivity() {
         b.modifySwitch.isChecked = prefs.logModify
         b.attribSwitch.isChecked = prefs.logAttrib
         b.hiddenSwitch.setOnCheckedChangeListener { _, v -> prefs.includeHidden = v }
+
+        b.rootSwitch.isChecked = prefs.useRoot
+        b.rootSwitch.setOnCheckedChangeListener { sw, v ->
+            if (!v) { prefs.useRoot = false; return@setOnCheckedChangeListener }
+            toast("Checking root… approve the superuser prompt")
+            Thread {
+                val ok = RootShell.isAvailable()
+                runOnUiThread {
+                    prefs.useRoot = ok
+                    sw.isChecked = ok
+                    toast(if (ok) "Root granted ✓" else "Root not available or denied")
+                }
+            }.start()
+        }
+        b.appDataBtn.setOnClickListener {
+            b.pathInput.setText("/data/data")
+            if (!prefs.useRoot) toast("Turn on root mode to watch app private data")
+        }
         b.modifySwitch.setOnCheckedChangeListener { _, v -> prefs.logModify = v }
         b.attribSwitch.setOnCheckedChangeListener { _, v -> prefs.logAttrib = v }
 
@@ -114,19 +132,26 @@ class MainActivity : AppCompatActivity() {
             b.root.postDelayed({ refreshStatus() }, 300)
             return
         }
+        val path = root()
+        if (prefs.useRoot) {
+            if (!path.startsWith("/")) { toast("Enter an absolute path"); return }
+            prefs.folder = path
+            WatcherService.start(this, path)
+            b.root.postDelayed({ refreshStatus() }, 300)
+            return
+        }
         if (!hasStorageAccess()) {
             toast("Grant \"All files access\" first")
             requestStorageAccess()
             return
         }
-        val path = root()
         val dir = File(path)
         if (!dir.isDirectory) {
             toast("Folder not found: $path")
             return
         }
         if (!dir.canRead()) {
-            toast("Android blocks reading this folder (e.g. Android/data or another app's private storage).")
+            toast("Android blocks reading this folder. Turn on root mode (rooted phones only).")
             return
         }
         prefs.folder = path
@@ -143,7 +168,7 @@ class MainActivity : AppCompatActivity() {
             if (usageOk) "✓ Usage access (app names)" else "Grant usage access (optional)"
         b.startBtn.text = if (WatcherService.isRunning) "Stop watching" else "Start watching"
         b.status.text = if (WatcherService.isRunning)
-            "● Watching ${prefs.folder}\nLog file: ${ChangeLog.todayFile()?.absolutePath}"
+            "● Watching ${prefs.folder}${if (prefs.useRoot) " (root)" else ""}\nLog file: ${ChangeLog.todayFile()?.absolutePath}"
         else "○ Not watching"
     }
 

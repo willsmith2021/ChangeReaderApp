@@ -21,7 +21,7 @@ import java.io.File
  */
 class WatcherService : Service() {
 
-    private var observer: RecursiveObserver? = null
+    private var observer: FolderWatcher? = null
     private lateinit var tracker: ForegroundAppTracker
     private lateinit var worker: Handler
     private var rootPath = ""
@@ -46,7 +46,7 @@ class WatcherService : Service() {
 
         val prefs = Prefs(this)
         val path = intent?.getStringExtra(EXTRA_PATH) ?: prefs.folder
-        if (path.isNullOrBlank() || !File(path).isDirectory) {
+        if (path.isNullOrBlank() || (!prefs.useRoot && !File(path).isDirectory)) {
             stopSelf()
             return START_NOT_STICKY
         }
@@ -58,15 +58,23 @@ class WatcherService : Service() {
         prefs.running = true
         observer?.stop()
         worker.post {
-            observer = RecursiveObserver(File(path), prefs.includeHidden) { type, file, isDir ->
-                worker.post { handle(type, file, isDir, prefs) }
+            observer = if (prefs.useRoot) {
+                RootWatcher(File(path), prefs.includeHidden) { type, file, isDir, size ->
+                    worker.post { handle(type, file, isDir, prefs, size) }
+                }
+            } else {
+                RecursiveObserver(File(path), prefs.includeHidden) { type, file, isDir ->
+                    worker.post { handle(type, file, isDir, prefs, null) }
+                }
             }.also { it.start() }
             updateNotification()
         }
         return START_STICKY // Android restarts the service if it gets killed
     }
 
-    private fun handle(type: ChangeType, file: File, isDir: Boolean, prefs: Prefs) {
+    private fun handle(
+        type: ChangeType, file: File, isDir: Boolean, prefs: Prefs, rootSize: Long?
+    ) {
         val now = System.currentTimeMillis()
         val key = file.absolutePath
 
@@ -79,7 +87,7 @@ class WatcherService : Service() {
         if (type == ChangeType.WRITE_FINISHED) lastModify.remove(key)
         if (type == ChangeType.ATTRIBUTES && !prefs.logAttrib) return
 
-        val size = if (!isDir && file.exists()) file.length() else null
+        val size = rootSize ?: if (!isDir && file.exists()) file.length() else null
         ChangeLog.add(ChangeEntry(now, type, key, isDir, size, tracker.current()))
         eventCount++
         if (eventCount % 5 == 1) updateNotification()
@@ -93,7 +101,8 @@ class WatcherService : Service() {
 
     private fun updateNotification() {
         val folders = observer?.watchedFolderCount() ?: 0
-        val text = "$eventCount changes · $folders folders watched"
+        val mode = if (Prefs(this).useRoot) " · root" else ""
+        val text = "$eventCount changes · $folders folders watched$mode"
         getSystemService(NotificationManager::class.java).notify(NOTIF_ID, notification(text))
     }
 

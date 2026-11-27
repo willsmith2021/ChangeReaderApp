@@ -42,6 +42,15 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:text="Whole storage" />
+
+        <Button
+            android:id="@+id/appDataBtn"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="App data" />
     </LinearLayout>
 
     <Button
@@ -57,6 +66,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Grant usage access (optional)" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/rootSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Root mode (read private app data – rooted phones)" />
 
     <com.google.android.material.materialswitch.MaterialSwitch
         android:id="@+id/modifySwitch"

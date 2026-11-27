@@ -36,8 +36,17 @@ Logs are saved as one CSV file per day:
 Columns: `timestamp, event, kind, path, size_bytes, foreground_app`.
 Use **Export CSV** to share today's file.
 
+## Root mode (rooted phones only)
+Turn on **Root mode** to watch folders a normal app can't read: `/data/data/<package>`
+(another app's private data), `/data/user/0`, `Android/data` and `Android/obb`.
+- The phone must be rooted (Magisk, KernelSU or APatch). Approve the "Grant superuser" prompt when it appears.
+- Tap **App data** to fill in `/data/data`, or enter one app's folder, such as `/data/data/com.whatsapp`.
+- Root mode uses Android's built-in `inotifyd` command and watches up to 3,000 sub-folders.
+  When a new sub-folder appears, the watcher restarts so the new folder is covered too.
+- Watching all of `/data/data` produces a lot of events. For readable logs, pick one app's folder.
+
 ## Limits (these come from Android itself)
-- **Other apps' private storage can't be watched.** This means `/data/data/<pkg>` and, on
+- **Without root, other apps' private storage can't be watched.** This means `/data/data/<pkg>` and, on
   Android 11+, `Android/data` and `Android/obb`. Only root access gets around this. The app
   covers shared storage: Download, DCIM, Pictures, Documents, WhatsApp media, and similar folders.
 - **"Foreground app" is the app on screen, not necessarily the app that wrote the file.**

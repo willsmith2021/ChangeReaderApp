@@ -13,24 +13,24 @@ class RecursiveObserver(
     private val root: File,
     private val includeHidden: Boolean,
     private val onEvent: (type: ChangeType, file: File, isDir: Boolean) -> Unit
-) {
+) : FolderWatcher {
     private val observers = ConcurrentHashMap<String, SingleDirObserver>()
 
     @Volatile
     private var running = false
 
-    fun start() {
+    override fun start() {
         running = true
         watchTree(root, reportExisting = false)
     }
 
-    fun stop() {
+    override fun stop() {
         running = false
         observers.values.forEach { it.stopWatching() }
         observers.clear()
     }
 
-    fun watchedFolderCount(): Int = observers.size
+    override fun watchedFolderCount(): Int = observers.size
 
     private fun watchTree(dir: File, reportExisting: Boolean) {
         if (!running || !dir.isDirectory) return
