@@ -63,16 +63,16 @@ jobs:
             adb shell "cat /sdcard/Android/data/com.rt.changereader/files/logs/*.csv" > applog.txt || true
             adb logcat -d -b crash > crash.log || true
             adb shell pidof com.rt.changereader > pid.txt || true
+            adb root
+            sleep 5
+            adb wait-for-device
             adb shell "pidof com.rt.changereader" > pid_before.txt || true
-            adb shell "kill \$(pidof com.rt.changereader)" || true
+            adb shell "kill -9 \$(pidof com.rt.changereader)" || true
             sleep 25
             adb shell "pidof com.rt.changereader" > pid_after.txt || true
             adb shell "echo again > /sdcard/Download/cr_after_kill.txt"
             sleep 10
             adb shell "cat /sdcard/Android/data/com.rt.changereader/files/logs/*.csv" > applog.txt || true
-            adb root
-            sleep 5
-            adb wait-for-device
             adb push app/src/main/assets/changereader_watch.sh /data/local/tmp/w.sh
             adb shell "sh /data/local/tmp/w.sh /data/data/com.android.settings 0 3000 > /data/local/tmp/out.txt 2>&1 &"
             sleep 6

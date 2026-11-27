@@ -52,6 +52,10 @@ class WatcherService : Service() {
         }
 
         startAsForeground(notification("Starting…"))
+        if (isRunning && observer != null && path == rootPath) {
+            updateNotification()
+            return START_STICKY      // already watching this folder – nothing to restart
+        }
 
         rootPath = path
         isRunning = true
