@@ -35,3 +35,37 @@ jobs:
         with:
           name: ChangeReader-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Enable KVM for emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Launch app on emulator (smoke test)
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am start -W -n com.rt.changereader/.MainActivity
+            sleep 10
+            adb logcat -d -b crash > crash.log || true
+            adb shell pidof com.rt.changereader > pid.txt || true
+
+      - name: Report launch result
+        if: always()
+        run: |
+          if [ -s crash.log ]; then
+            echo "::error::CRASH $(head -c 3500 crash.log | tr '\n' ' ')"
+          elif [ -s pid.txt ]; then
+            echo "::notice::LAUNCH_OK app is running (pid $(cat pid.txt))"
+          else
+            echo "::warning::LAUNCH_UNKNOWN no crash log and no process"
+          fi

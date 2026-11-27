@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (showLastCrash()) return
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
         prefs = Prefs(this)
@@ -110,8 +111,37 @@ class MainActivity : AppCompatActivity() {
         ) notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
+    private var crashScreen = false
+
+    /** If the app crashed last time, show the error (copyable) instead of the normal screen. */
+    private fun showLastCrash(): Boolean {
+        val f = App.crashFile(this)
+        if (!f.exists()) return false
+        val text = f.readText()
+        f.delete()
+        crashScreen = true
+        val tv = TextView(this).apply {
+            setText(text); setTextIsSelectable(true); textSize = 11f; setPadding(32, 32, 32, 32)
+        }
+        val scroll = android.widget.ScrollView(this).apply { addView(tv) }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Change Reader crashed last time")
+            .setView(scroll)
+            .setPositiveButton("Copy error") { _, _ ->
+                val cm = getSystemService(android.content.ClipboardManager::class.java)
+                cm.setPrimaryClip(android.content.ClipData.newPlainText("crash", text))
+                toast("Copied – paste it to Claude")
+                recreate()
+            }
+            .setNegativeButton("Retry") { _, _ -> recreate() }
+            .setCancelable(false)
+            .show()
+        return true
+    }
+
     override fun onResume() {
         super.onResume()
+        if (crashScreen) return
         adapter.setAll(ChangeLog.snapshot(), root())
         b.empty.visibility =
             if (adapter.itemCount == 0) android.view.View.VISIBLE else android.view.View.GONE
@@ -120,7 +150,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
-        ChangeLog.removeListener(listener)
+        if (!crashScreen) ChangeLog.removeListener(listener)
         super.onPause()
     }
 
