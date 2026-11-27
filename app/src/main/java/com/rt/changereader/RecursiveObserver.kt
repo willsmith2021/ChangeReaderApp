@@ -58,8 +58,10 @@ class RecursiveObserver(
         }
     }
 
+    // String-path constructor works on every Android version (the File one needs Android 10+)
+    @Suppress("DEPRECATION")
     private inner class SingleDirObserver(private val dir: File) :
-        FileObserver(dir, MASK) {
+        FileObserver(dir.absolutePath, MASK) {
 
         override fun onEvent(event: Int, path: String?) {
             val ev = event and ALL_EVENTS

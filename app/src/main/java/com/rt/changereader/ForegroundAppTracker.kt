@@ -31,7 +31,9 @@ class ForegroundAppTracker(private val context: Context) {
         val e = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
-            if (e.eventType == UsageEvents.Event.ACTIVITY_RESUMED) lastPkg = e.packageName
+            // MOVE_TO_FOREGROUND (Android 9 and older) has the same value as ACTIVITY_RESUMED
+            @Suppress("DEPRECATION")
+            if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) lastPkg = e.packageName
         }
         lastQuery = now
         return lastPkg?.let { label(it) }
@@ -50,9 +52,16 @@ class ForegroundAppTracker(private val context: Context) {
     companion object {
         fun hasUsageAccess(context: Context): Boolean {
             val ops = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-            val mode = ops.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
-            )
+            val mode = if (android.os.Build.VERSION.SDK_INT >= 29) {
+                ops.unsafeCheckOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                ops.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
+                )
+            }
             return mode == AppOpsManager.MODE_ALLOWED
         }
     }

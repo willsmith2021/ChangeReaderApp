@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.rt.changereader"
-        minSdk = 29          // FileObserver(File) constructor + scoped storage era
+        minSdk = 26          // Android 8.0+
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

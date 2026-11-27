@@ -9,7 +9,7 @@
     <!-- Android 10 fallback -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29" />
+        android:maxSdkVersion="32" />
 
     <!-- Keep watching while other apps are in use -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

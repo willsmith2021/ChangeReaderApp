@@ -10,7 +10,8 @@ use other apps. Each entry also records **which app was on screen** at that mome
 2. Plug in your phone with USB debugging on, then press **Run ▶**.
    Or use **Build → Build APK(s)** and install `app/build/outputs/apk/debug/app-debug.apk`.
 
-Needs Android 10 (API 29) or newer.
+Works on Android 8.0 (API 26) and newer, including Android 9. On Android 9 and 10, tap
+**Grant all files access** to give the regular storage permission instead.
 
 ## First run
 1. **Grant all files access.** This opens Settings. Turn on *Allow access to manage all files*.
