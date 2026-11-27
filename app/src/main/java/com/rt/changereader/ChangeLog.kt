@@ -17,7 +17,8 @@ enum class ChangeType(val label: String) {
     DELETED("DELETED"),
     MOVED_IN("MOVED_IN"),
     MOVED_OUT("MOVED_OUT"),
-    ATTRIBUTES("ATTRIB")
+    ATTRIBUTES("ATTRIB"),
+    INFO("INFO")
 }
 
 data class ChangeEntry(
@@ -39,6 +40,7 @@ data class ChangeEntry(
 
     fun toDisplay(root: String): String {
         val rel = path.removePrefix(root).ifEmpty { "/" }
+        if (type == ChangeType.INFO) return "${UI_TIME.format(Date(time))}  ℹ $path"
         val kind = if (isDir) "📁" else "📄"
         val size = sizeBytes?.let { " (${humanSize(it)})" } ?: ""
         val app = foregroundApp?.let { "  ← $it" } ?: ""

@@ -53,15 +53,31 @@ jobs:
           disable-animations: true
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm grant com.rt.changereader android.permission.READ_EXTERNAL_STORAGE
             adb logcat -c
-            adb shell am start -W -n com.rt.changereader/.MainActivity
-            sleep 10
+            adb shell am start -W -n com.rt.changereader/.MainActivity --es autostart_path /sdcard/Download --es autostart_root 0
+            sleep 8
+            adb shell "echo hello > /sdcard/Download/cr_test.txt"
+            adb shell "mkdir -p /sdcard/Download/cr_folder && echo x > /sdcard/Download/cr_folder/inner.txt"
+            sleep 12
+            adb shell "cat /sdcard/Android/data/com.rt.changereader/files/logs/*.csv" > applog.txt || true
             adb logcat -d -b crash > crash.log || true
             adb shell pidof com.rt.changereader > pid.txt || true
+            adb root
+            sleep 5
+            adb wait-for-device
+            adb push app/src/main/assets/changereader_watch.sh /data/local/tmp/w.sh
+            adb shell "sh /data/local/tmp/w.sh /data/data/com.android.settings 0 3000 > /data/local/tmp/out.txt 2>&1 &"
+            sleep 6
+            adb shell "echo hi > /data/data/com.android.settings/cr_root_test.txt && mkdir /data/data/com.android.settings/cr_root_dir"
+            sleep 4
+            adb shell cat /data/local/tmp/out.txt > rootlog.txt || true
 
       - name: Report launch result
         if: always()
         run: |
+          echo "::notice::APPLOG $(head -c 3000 applog.txt 2>/dev/null | tr '\n' ' ')"
+          echo "::notice::ROOTLOG $(head -c 3000 rootlog.txt 2>/dev/null | tr '\n' ' ')"
           if [ -s crash.log ]; then
             echo "::error::CRASH $(head -c 3500 crash.log | tr '\n' ' ')"
           elif [ -s pid.txt ]; then

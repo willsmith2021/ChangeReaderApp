@@ -58,25 +58,60 @@ class WatcherService : Service() {
         prefs.running = true
         observer?.stop()
         worker.post {
+            recent.clear()
             observer = if (prefs.useRoot) {
-                RootWatcher(File(path), prefs.includeHidden) { type, file, isDir, size ->
-                    worker.post { handle(type, file, isDir, prefs, size) }
-                }
+                RootWatcher(this, File(path), prefs.includeHidden,
+                    { type, file, isDir, size -> worker.post { handle(type, file, isDir, prefs, size, false) } },
+                    { msg -> info(msg) })
             } else {
-                RecursiveObserver(File(path), prefs.includeHidden) { type, file, isDir ->
-                    worker.post { handle(type, file, isDir, prefs, null) }
+                val live = RecursiveObserver(File(path), prefs.includeHidden) { type, file, isDir ->
+                    worker.post { handle(type, file, isDir, prefs, null, false) }
                 }
+                if (prefs.backupScan) {
+                    val scan = PollingWatcher(
+                        SCAN_MS, PollingWatcher.fileScanner(File(path), prefs.includeHidden)
+                    ) { type, file, isDir, size ->
+                        worker.post { handle(type, file, isDir, prefs, size, true) }
+                    }
+                    CombinedWatcher(live, scan)
+                } else live
             }.also { it.start() }
+            info(
+                "Started watching $path" +
+                    (if (prefs.useRoot) " (root)" else if (prefs.backupScan) " (live + scan every ${SCAN_MS / 1000}s)" else " (live)")
+            )
             updateNotification()
         }
         return START_STICKY // Android restarts the service if it gets killed
     }
 
+    // path -> (category, time) of recent live events, so the backup scan doesn't log them twice
+    private val recent = HashMap<String, Pair<Int, Long>>()
+
+    private fun category(t: ChangeType) = when (t) {
+        ChangeType.CREATED, ChangeType.MOVED_IN -> 1
+        ChangeType.DELETED, ChangeType.MOVED_OUT -> 2
+        else -> 3
+    }
+
+    private fun info(msg: String) {
+        ChangeLog.add(ChangeEntry(System.currentTimeMillis(), ChangeType.INFO, msg, false, null, null))
+    }
+
     private fun handle(
-        type: ChangeType, file: File, isDir: Boolean, prefs: Prefs, rootSize: Long?
+        type: ChangeType, file: File, isDir: Boolean, prefs: Prefs, rootSize: Long?, fromScan: Boolean
     ) {
         val now = System.currentTimeMillis()
         val key = file.absolutePath
+
+        val cat = category(type)
+        if (fromScan) {
+            val r = recent[key]
+            if (r != null && r.first == cat && now - r.second < SCAN_MS * 3) return
+        } else {
+            recent[key] = cat to now
+            if (recent.size > 5000) recent.entries.removeAll { now - it.value.second > SCAN_MS * 3 }
+        }
 
         if (type == ChangeType.MODIFIED) {
             if (!prefs.logModify) return
@@ -154,6 +189,7 @@ class WatcherService : Service() {
         const val ACTION_STOP = "com.rt.changereader.STOP"
         private const val CHANNEL = "watcher"
         private const val NOTIF_ID = 42
+        private const val SCAN_MS = 5000L
 
         @Volatile var isRunning = false
             private set

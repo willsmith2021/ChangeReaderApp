@@ -30,4 +30,9 @@ class Prefs(context: Context) {
     var useRoot: Boolean
         get() = sp.getBoolean("root", false)
         set(v) = sp.edit().putBoolean("root", v).apply()
+
+    /** Also rescan every few seconds to catch changes Android doesn't report live. */
+    var backupScan: Boolean
+        get() = sp.getBoolean("scan", true)
+        set(v) = sp.edit().putBoolean("scan", v).apply()
 }

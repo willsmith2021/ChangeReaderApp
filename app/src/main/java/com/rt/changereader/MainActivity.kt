@@ -105,6 +105,13 @@ class MainActivity : AppCompatActivity() {
             b.empty.visibility = android.view.View.VISIBLE
         }
 
+        intent?.getStringExtra("autostart_path")?.let { p ->
+            intent.getStringExtra("autostart_root")?.let { prefs.useRoot = it == "1" }
+            b.pathInput.setText(p)
+            prefs.folder = p
+            WatcherService.start(this, p)
+        }
+
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
@@ -292,6 +299,7 @@ class MainActivity : AppCompatActivity() {
                     ChangeType.DELETED, ChangeType.MOVED_OUT -> 0xFFC62828.toInt()
                     ChangeType.MODIFIED, ChangeType.WRITE_FINISHED -> 0xFF1565C0.toInt()
                     ChangeType.ATTRIBUTES -> 0xFF757575.toInt()
+                    ChangeType.INFO -> 0xFFEF6C00.toInt()
                 }
             )
         }
