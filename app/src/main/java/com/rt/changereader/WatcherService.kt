@@ -86,7 +86,7 @@ class WatcherService : Service() {
     }
 
     // path -> (category, time) of recent live events, so the backup scan doesn't log them twice
-    private val recent = HashMap<String, Pair<Int, Long>>()
+    private val recent = HashMap<String, Long>()
 
     private fun category(t: ChangeType) = when (t) {
         ChangeType.CREATED, ChangeType.MOVED_IN -> 1
@@ -105,12 +105,13 @@ class WatcherService : Service() {
         val key = file.absolutePath
 
         val cat = category(type)
+        val rk = "$cat|$key"
         if (fromScan) {
-            val r = recent[key]
-            if (r != null && r.first == cat && now - r.second < SCAN_MS * 3) return
+            val t = recent[rk]
+            if (t != null && now - t < SCAN_MS * 3) return
         } else {
-            recent[key] = cat to now
-            if (recent.size > 5000) recent.entries.removeAll { now - it.value.second > SCAN_MS * 3 }
+            recent[rk] = now
+            if (recent.size > 5000) recent.entries.removeAll { now - it.value > SCAN_MS * 3 }
         }
 
         if (type == ChangeType.MODIFIED) {
