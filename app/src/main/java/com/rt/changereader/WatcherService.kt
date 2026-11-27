@@ -82,6 +82,8 @@ class WatcherService : Service() {
             )
             updateNotification()
         }
+        KeepAliveReceiver.scheduleWatchdog(this)
+        if (prefs.useRoot) whitelistFromDozeWithRoot()
         return START_STICKY // Android restarts the service if it gets killed
     }
 
@@ -167,7 +169,27 @@ class WatcherService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
     }
 
+    /** App swiped away from Recents: make sure we come back even on aggressive phones. */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        if (Prefs(this).running) KeepAliveReceiver.scheduleQuickRestart(this)
+        super.onTaskRemoved(rootIntent)
+    }
+
+    /** With root we can exempt ourselves from Doze/battery optimisation without asking. */
+    private fun whitelistFromDozeWithRoot() {
+        worker.post {
+            try {
+                Runtime.getRuntime().exec(
+                    arrayOf("su", "-c", "dumpsys deviceidle whitelist +$packageName; " +
+                        "cmd appops set $packageName RUN_IN_BACKGROUND allow; " +
+                        "cmd appops set $packageName RUN_ANY_IN_BACKGROUND allow")
+                ).waitFor()
+            } catch (_: Exception) { }
+        }
+    }
+
     private fun stopEverything() {
+        KeepAliveReceiver.cancelWatchdog(this)
         observer?.stop()
         observer = null
         isRunning = false
@@ -177,6 +199,8 @@ class WatcherService : Service() {
     }
 
     override fun onDestroy() {
+        // Killed while the user still wants watching on: ask to be restarted
+        if (Prefs(this).running) KeepAliveReceiver.scheduleQuickRestart(this)
         observer?.stop()
         isRunning = false
         worker.looper.quitSafely()

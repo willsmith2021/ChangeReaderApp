@@ -61,6 +61,13 @@
         android:text="Grant all files access" />
 
     <Button
+        android:id="@+id/batteryBtn"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Allow running in background" />
+
+    <Button
         android:id="@+id/usagePermBtn"
         style="@style/Widget.Material3.Button.TonalButton"
         android:layout_width="match_parent"

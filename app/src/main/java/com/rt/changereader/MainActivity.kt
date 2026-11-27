@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         b.attribSwitch.setOnCheckedChangeListener { _, v -> prefs.logAttrib = v }
 
         b.storagePermBtn.setOnClickListener { requestStorageAccess() }
+        b.batteryBtn.setOnClickListener { requestNoBatteryLimits() }
         b.usagePermBtn.setOnClickListener {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
@@ -203,10 +204,28 @@ class MainActivity : AppCompatActivity() {
         b.storagePermBtn.isEnabled = !storageOk
         b.usagePermBtn.text =
             if (usageOk) "✓ Usage access (app names)" else "Grant usage access (optional)"
+        val battOk = isIgnoringBattery()
+        b.batteryBtn.text = if (battOk) "✓ No battery limits (keeps running)" else "Allow running in background"
+        b.batteryBtn.isEnabled = !battOk
         b.startBtn.text = if (WatcherService.isRunning) "Stop watching" else "Start watching"
         b.status.text = if (WatcherService.isRunning)
             "● Watching ${prefs.folder}${if (prefs.useRoot) " (root)" else ""}\nLog file: ${ChangeLog.todayFile()?.absolutePath}"
         else "○ Not watching"
+    }
+
+    private fun isIgnoringBattery(): Boolean =
+        getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+
+    @android.annotation.SuppressLint("BatteryLife")
+    private fun requestNoBatteryLimits() {
+        try {
+            startActivity(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    .setData(Uri.parse("package:$packageName"))
+            )
+        } catch (_: Exception) {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        }
     }
 
     private fun hasStorageAccess(): Boolean =
