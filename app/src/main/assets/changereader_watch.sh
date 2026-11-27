@@ -1,5 +1,6 @@
 #!/system/bin/sh
 # Change Reader root watcher. $1=folder $2=include hidden (1/0) $3=max folders
+# No event mask: toybox 0.7.x (Android 9) mis-parses masks containing "n" and drops CREATE events.
 R="$1"; H="$2"; MAX="$3"
 T=""
 if command -v inotifyd >/dev/null 2>&1; then T="inotifyd"
@@ -17,7 +18,7 @@ else find "$R" -type d 2>/dev/null | grep -v '/\.' | head -n "$MAX" > "$L"; fi
 N=$(wc -l < "$L" | tr -d ' ')
 echo "#INFO dirs=$N"
 set --
-while IFS= read -r D; do set -- "$@" "$D:ncwdmyeDM"; done < "$L"
+while IFS= read -r D; do set -- "$@" "$D"; done < "$L"
 rm -f "$L"
 echo "#INFO ready"
 exec $T - "$@"

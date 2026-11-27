@@ -158,12 +158,13 @@ class RootWatcher(
         val type = when {
             'n' in ev -> ChangeType.CREATED
             'd' in ev -> ChangeType.DELETED
-            'm' in ev -> ChangeType.MOVED_IN
-            'y' in ev -> ChangeType.MOVED_OUT
+            // Verified on Android 9 toybox: y = moved in, m = moved out
+            'y' in ev -> ChangeType.MOVED_IN
+            'm' in ev -> ChangeType.MOVED_OUT
             'w' in ev -> ChangeType.WRITE_FINISHED
             'c' in ev -> ChangeType.MODIFIED
             'e' in ev -> ChangeType.ATTRIBUTES
-            else -> return
+            else -> return // a/r/0 (access/open/close-nowrite) are ignored
         }
 
         var isDir = false

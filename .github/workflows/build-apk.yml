@@ -69,24 +69,15 @@ jobs:
             adb push app/src/main/assets/changereader_watch.sh /data/local/tmp/w.sh
             adb shell "sh /data/local/tmp/w.sh /data/data/com.android.settings 0 3000 > /data/local/tmp/out.txt 2>&1 &"
             sleep 6
-            adb shell "echo hi > /data/data/com.android.settings/cr_root_test.txt && mkdir /data/data/com.android.settings/cr_root_dir"
+            adb shell "echo hi > /data/data/com.android.settings/cr_root_test.txt && mkdir /data/data/com.android.settings/cr_root_dir && rm /data/data/com.android.settings/cr_root_test.txt"
             sleep 4
             adb shell cat /data/local/tmp/out.txt > rootlog.txt || true
-            adb shell "mkdir -p /data/local/tmp/t/sub /data/local/tmp/o && echo z > /data/local/tmp/o/mv.txt"
-            adb shell "inotifyd - /data/local/tmp/t:ncwdmyeDM > /data/local/tmp/m1.txt 2>&1 &"
-            adb shell "inotifyd - /data/local/tmp/t > /data/local/tmp/m2.txt 2>&1 &"
-            adb shell "inotifyd - /data/local/tmp/t:n > /data/local/tmp/m3.txt 2>&1 &"
-            sleep 3
-            adb shell "echo a > /data/local/tmp/t/new.txt; mkdir /data/local/tmp/t/newdir; mv /data/local/tmp/o/mv.txt /data/local/tmp/t/in.txt; mv /data/local/tmp/t/new.txt /data/local/tmp/o/out.txt; rm /data/local/tmp/t/in.txt"
-            sleep 3
-            adb shell "pkill inotifyd; echo M1:; cat /data/local/tmp/m1.txt; echo M2:; cat /data/local/tmp/m2.txt; echo M3:; cat /data/local/tmp/m3.txt; echo TOYBOX:; toybox --version; toybox inotifyd --help 2>&1 | head -30" > masks.txt || true
 
       - name: Report launch result
         if: always()
         run: |
           echo "::notice::APPLOG $(head -c 3000 applog.txt 2>/dev/null | tr '\n' ' ')"
-          echo "::notice::MASKS $(head -c 3500 masks.txt 2>/dev/null | tr '\n' ' ' | tr '\t' '~')"
-          echo "::notice::ROOTLOG $(head -c 3000 rootlog.txt 2>/dev/null | tr '\n' ' ')"
+          echo "::notice::ROOTLOG $(grep -v '^[ar0]' rootlog.txt 2>/dev/null | head -c 3000 | tr '\n' ' ' | tr '\t' '~')"
           if [ -s crash.log ]; then
             echo "::error::CRASH $(head -c 3500 crash.log | tr '\n' ' ')"
           elif [ -s pid.txt ]; then
